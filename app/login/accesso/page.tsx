@@ -55,7 +55,7 @@ export default function AccessoPage() {
         <div className="absolute bottom-[18%] left-[35%] w-[260px] h-[120px] bg-white/10 blur-[110px] rotate-[15deg]" />
       </div>
 
-      <div className="relative z-10 w-full max-w-xl mt-[320px]">
+      <div className="relative z-10 w-full max-w-xl mt-[30vh] md:mt-[350px]">
         <div className="bg-black/75 backdrop-blur-md border border-red-600 rounded-[35px] p-8 shadow-[0_0_45px_rgba(255,0,0,0.45)]">
 
           <div className="flex items-center gap-4 justify-center mb-8">
