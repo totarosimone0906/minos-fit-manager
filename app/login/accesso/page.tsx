@@ -9,7 +9,7 @@ export default function AccessoPage() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-
+  const [mostraPassword, setMostraPassword] = useState(false)
 async function accedi() {
   const emailPulita = email.trim().toLowerCase()
   const passwordPulita = password.trim()
@@ -67,12 +67,22 @@ async function accedi() {
           />
 
           <input
-            type="password"
+            type={mostraPassword ? "text" : "password"}
+            
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4"
+
+            
           />
+          <button
+  type="button"
+  onClick={() => setMostraPassword(!mostraPassword)}
+  className="text-zinc-400 text-sm"
+>
+  {mostraPassword ? "Nascondi password" : "Mostra password"}
+</button>
 
           <button
   type="button"
