@@ -252,21 +252,29 @@ export default function AreaClientePage() {
           )}
         </section>
 
-        <section className="bg-zinc-950 border border-zinc-800 rounded-[2rem] p-5">
-          <h2 className="text-xl font-black text-red-500">📅 Prenotazioni PT</h2>
+       <section className="bg-zinc-950 border border-zinc-800 rounded-[2rem] p-5">
+  <h2 className="text-xl font-black text-red-500">📅 Prenotazioni PT</h2>
 
-          <p className="text-zinc-400 mt-2 mb-4">
-            Personal trainer assegnato:
-          </p>
+  <p className="text-zinc-400 mt-2 mb-3">
+    Scegli il personal trainer
+  </p>
 
-          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4 mb-4 font-bold">
-            {pt || "Non assegnato"}
-          </div>
+  <select
+    className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 font-bold text-white"
+  >
+    <option>Simone Totaro</option>
+    <option>Daniele Totaro</option>
+    <option>Qualsiasi operatore</option>
+  </select>
 
-          <button className="w-full bg-red-600 rounded-2xl p-4 font-black">
-            Apri calendario PT
-          </button>
-        </section>
+  <button
+    type="button"
+    className="w-full mt-5 bg-red-600 rounded-2xl p-4 font-black text-white"
+    onClick={() => alert("Qui apriremo il calendario PT")}
+  >
+    Apri calendario PT
+  </button>
+</section>
 
         <section className="bg-zinc-950 border border-zinc-800 rounded-[2rem] p-5">
           <h2 className="text-xl font-black text-red-500">📄 Le mie schede</h2>
