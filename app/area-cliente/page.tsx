@@ -350,7 +350,7 @@ export default function AreaClientePage() {
 
       </div>
 
-      <style jsx global>{`
+      <style>{`
         @keyframes slideIn {
           from {
             opacity: 0;
