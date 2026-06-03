@@ -9,15 +9,22 @@ export default function AreaClientePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [cliente, setCliente] = useState<any>(null)
-  const [pt, setPt] = useState("Simone Totaro")
   const [richiestaInviata, setRichiestaInviata] = useState(false)
+
+  const [calendarioAperto, setCalendarioAperto] = useState(false)
+  const [operatore, setOperatore] = useState("Simone Totaro")
+  const [dataPrenotazione, setDataPrenotazione] = useState("")
+  const [oraPrenotazione, setOraPrenotazione] = useState("")
+  const [prenotazioneInviata, setPrenotazioneInviata] = useState(false)
+  const [errorePrenotazione, setErrorePrenotazione] = useState("")
 
   useEffect(() => {
     caricaClienteAggiornato()
   }, [])
 
   async function caricaClienteAggiornato() {
-    const clienteSalvato = localStorage.getItem("cliente")
+    const clienteSalvato =
+      localStorage.getItem("cliente") || localStorage.getItem("utente")
 
     if (!clienteSalvato) {
       router.push("/login/accesso")
@@ -31,10 +38,6 @@ export default function AreaClientePage() {
       .select("*")
       .eq("id", clienteBase.id)
       .single()
-      console.log(cliente)
-        console.log(cliente?.schede_file_url)
-        
-      
 
     if (error || !data) {
       router.push("/login/accesso")
@@ -42,8 +45,8 @@ export default function AreaClientePage() {
     }
 
     setCliente(data)
-    setPt(data.pt_assegnato || "Simone Totaro")
     localStorage.setItem("cliente", JSON.stringify(data))
+    localStorage.setItem("utente", JSON.stringify(data))
   }
 
   function logout() {
@@ -88,7 +91,6 @@ export default function AreaClientePage() {
 
   async function caricaCertificato(e: any) {
     const file = e.target.files?.[0]
-
     if (!file) return
 
     if (file.type !== "application/pdf") {
@@ -113,9 +115,7 @@ export default function AreaClientePage() {
 
     const { error: updateError } = await supabase
       .from("profiles")
-      .update({
-        certificato_file_url: data.publicUrl,
-      })
+      .update({ certificato_file_url: data.publicUrl })
       .eq("id", cliente.id)
 
     if (updateError) {
@@ -123,11 +123,7 @@ export default function AreaClientePage() {
       return
     }
 
-    setCliente({
-      ...cliente,
-      certificato_file_url: data.publicUrl,
-    })
-
+    setCliente({ ...cliente, certificato_file_url: data.publicUrl })
     alert("Certificato caricato correttamente ✅")
   }
 
@@ -149,6 +145,36 @@ export default function AreaClientePage() {
     setRichiestaInviata(true)
   }
 
+  async function confermaPrenotazione() {
+    if (!operatore || !dataPrenotazione || !oraPrenotazione) {
+      setErrorePrenotazione("Compila tutti i campi")
+      return
+    }
+
+    const { error } = await supabase
+      .from("prenotazioni_pt")
+      .insert([
+        {
+          cliente_id: cliente.id,
+          cliente_nome: `${cliente.nome} ${cliente.cognome}`,
+          operatore,
+          data: dataPrenotazione,
+          ora: oraPrenotazione,
+          prezzo: 10,
+          stato: "confermata",
+          pagamento: "in_presenza",
+        },
+      ])
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    setErrorePrenotazione("")
+    setPrenotazioneInviata(true)
+  }
+
   if (!cliente) {
     return (
       <main className="min-h-screen bg-[#050505] text-white flex items-center justify-center">
@@ -162,18 +188,16 @@ export default function AreaClientePage() {
       <div className="max-w-md mx-auto space-y-5">
 
         <header className="flex items-center gap-4">
-          <div className="flex items-center justify-center">
-            <img
-              src="/logo-small.png"
-              alt="MINOS FIT"
-              className="w-[95px] h-[95px] object-contain drop-shadow-[0_0_18px_rgba(255,0,0,0.95)]"
-            />
-          </div>
+          <img
+            src="/logo-small.png"
+            alt="MINOS FIT"
+            className="w-[95px] h-[95px] object-contain drop-shadow-[0_0_18px_rgba(255,0,0,0.95)]"
+          />
 
           <div>
             <p className="text-zinc-400 text-sm">Bentornato</p>
             <h1 className="text-3xl font-black animate-[slideIn_0.9s_ease-out]">
-              Ciao {cliente.nome} {cliente.cognome} 
+              Ciao {cliente.nome} {cliente.cognome}
             </h1>
           </div>
         </header>
@@ -252,45 +276,141 @@ export default function AreaClientePage() {
           )}
         </section>
 
-       <section className="bg-zinc-950 border border-zinc-800 rounded-[2rem] p-5">
-  <h2 className="text-xl font-black text-red-500">📅 Prenotazioni PT</h2>
+        <section className="bg-zinc-950 border border-zinc-800 rounded-[2rem] p-5">
+          <h2 className="text-xl font-black text-red-500">📅 Prenotazioni PT</h2>
 
-  <p className="text-zinc-400 mt-2 mb-3">
-    Scegli il personal trainer
-  </p>
+          <p className="text-zinc-400 mt-2 mb-3">
+            Scegli il personal trainer
+          </p>
 
-  <select
-    className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 font-bold text-white"
-  >
-    <option>Simone Totaro</option>
-    <option>Daniele Totaro</option>
-    <option>Qualsiasi operatore</option>
-  </select>
+          <select
+            value={operatore}
+            onChange={(e) => setOperatore(e.target.value)}
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-4 font-bold text-white"
+          >
+            <option value="Simone Totaro">Simone Totaro</option>
+            <option value="Daniele Totaro">Daniele Totaro</option>
+            <option value="Qualsiasi operatore">Qualsiasi operatore</option>
+          </select>
 
-  <button
-    type="button"
-    className="w-full mt-5 bg-red-600 rounded-2xl p-4 font-black text-white"
-    onClick={() => alert("Qui apriremo il calendario PT")}
-  >
-    Apri calendario PT
-  </button>
-</section>
+          <button
+            type="button"
+            onClick={() => {
+              setPrenotazioneInviata(false)
+              setErrorePrenotazione("")
+              setCalendarioAperto(true)
+            }}
+            className="w-full mt-5 bg-red-600 rounded-2xl p-4 font-black text-white"
+          >
+            Apri calendario PT
+          </button>
+        </section>
+
+        {calendarioAperto && (
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center px-4">
+            <div className="w-full max-w-md bg-zinc-950 border border-red-600 rounded-[2rem] p-6 shadow-[0_0_40px_rgba(220,38,38,0.45)]">
+
+              <h2 className="text-2xl font-black text-red-500 text-center mb-5">
+                Prenota PT
+              </h2>
+
+              <label className="text-zinc-400">Personal trainer</label>
+              <select
+                value={operatore}
+                onChange={(e) => setOperatore(e.target.value)}
+                className="w-full mt-2 mb-4 bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white"
+              >
+                <option value="Simone Totaro">Simone Totaro</option>
+                <option value="Daniele Totaro">Daniele Totaro</option>
+                <option value="Qualsiasi operatore">Qualsiasi operatore</option>
+              </select>
+
+              <label className="text-zinc-400">Data</label>
+              <input
+                type="date"
+                value={dataPrenotazione}
+                onChange={(e) => setDataPrenotazione(e.target.value)}
+                className="w-full mt-2 mb-4 bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white"
+              />
+
+              <label className="text-zinc-400">Orario</label>
+              <select
+                value={oraPrenotazione}
+                onChange={(e) => setOraPrenotazione(e.target.value)}
+                className="w-full mt-2 mb-4 bg-zinc-900 border border-zinc-700 rounded-2xl p-4 text-white"
+              >
+                <option value="">Seleziona orario</option>
+                {[
+                  "09:00", "10:00", "11:00", "12:00", "13:00",
+                  "14:00", "15:00", "16:00", "17:00", "18:00",
+                  "19:00", "20:00", "21:00",
+                ].map((ora) => (
+                  <option key={ora} value={ora}>
+                    {ora}
+                  </option>
+                ))}
+              </select>
+
+              <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4 mb-4">
+                <p className="font-black">Costo: 10€</p>
+                <p className="text-zinc-400 text-sm">Pagamento in presenza</p>
+              </div>
+
+              {errorePrenotazione && (
+                <div className="mb-4 text-center text-red-500 font-bold">
+                  ❌ {errorePrenotazione}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={confermaPrenotazione}
+                className="w-full bg-red-600 rounded-2xl p-4 font-black"
+              >
+                Conferma prenotazione
+              </button>
+
+              {prenotazioneInviata && (
+                <p className="mt-4 text-green-500 font-black text-center">
+                  ✅ Prenotazione inviata
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setCalendarioAperto(false)}
+                className="w-full mt-3 bg-zinc-900 border border-zinc-700 rounded-2xl p-4 font-black"
+              >
+                Chiudi
+              </button>
+            </div>
+          </div>
+        )}
 
         <section className="bg-zinc-950 border border-zinc-800 rounded-[2rem] p-5">
           <h2 className="text-xl font-black text-red-500">📄 Le mie schede</h2>
 
           {cliente["cliente.schede_file_url"] ? (
-  <a
-    href={cliente["cliente.schede_file_url"]}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="block mt-4 bg-zinc-900 border border-red-600 rounded-2xl p-4 font-black text-center text-white shadow-[0_0_18px_rgba(220,38,38,0.35)]"
-  >
-    Apri scheda PDF
-  </a>
-) : (
-  <p className="text-zinc-400 mt-2">Nessuna scheda attiva.</p>
-)}
+            <a
+              href={cliente["cliente.schede_file_url"]}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block mt-4 bg-zinc-900 border border-red-600 rounded-2xl p-4 font-black text-center text-white shadow-[0_0_18px_rgba(220,38,38,0.35)]"
+            >
+              Apri scheda PDF
+            </a>
+          ) : cliente.schede_file_url ? (
+            <a
+              href={cliente.schede_file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block mt-4 bg-zinc-900 border border-red-600 rounded-2xl p-4 font-black text-center text-white shadow-[0_0_18px_rgba(220,38,38,0.35)]"
+            >
+              Apri scheda PDF
+            </a>
+          ) : (
+            <p className="text-zinc-400 mt-2">Nessuna scheda attiva.</p>
+          )}
 
           <button
             type="button"
@@ -355,7 +475,6 @@ export default function AreaClientePage() {
         >
           Logout
         </button>
-
       </div>
 
       <style>{`
