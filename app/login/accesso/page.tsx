@@ -99,23 +99,19 @@ export default function AccessoPage() {
     <main className="relative min-h-screen overflow-hidden bg-black text-white">
       {/* VIDEO INTRO */}
       {!erroreVideo && (
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          playsInline
-          preload="auto"
-          onLoadedData={() => setVideoPronto(true)}
-          onCanPlay={() => {
-            setVideoPronto(true)
-            void videoRef.current?.play()
-          }}
-          onEnded={videoTerminato}
-          onError={erroreRiproduzione}
-          className="fixed inset-0 h-full w-full bg-black object-cover object-[55%_center]"
-        >
-          <source src="/intro.mp4?v=3" type="video/mp4" />
-        </video>
+       <video
+  ref={videoRef}
+  muted
+  playsInline
+  preload="auto"
+  onLoadedMetadata={() => setVideoPronto(true)}
+  onCanPlay={() => setVideoPronto(true)}
+  onEnded={videoTerminato}
+  onError={erroreRiproduzione}
+  className="fixed inset-0 h-full w-full bg-black object-cover object-[42%_center] sm:object-center"
+>
+  <source src="/intro.mp4?v=4" type="video/mp4" />
+</video>
       )}
 
       {/* FALLBACK NERO, SENZA IL VECCHIO SFONDO */}
