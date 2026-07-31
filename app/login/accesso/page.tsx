@@ -108,9 +108,9 @@ export default function AccessoPage() {
   onCanPlay={() => setVideoPronto(true)}
   onEnded={videoTerminato}
   onError={erroreRiproduzione}
-  className="fixed top-0 left-1/2 h-full w-full -translate-x-[56%] bg-black object-contain"
+  className="fixed inset-0 h-full w-full object-cover object-center bg-black"
 >
-  <source src="/intro.mp4?v=4" type="video/mp4" />
+  <source src="/intro.mp4?v=8" type="video/mp4" />
 </video>
       )}
 
