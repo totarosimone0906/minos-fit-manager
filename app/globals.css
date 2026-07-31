@@ -5,3 +5,32 @@ html, body {
   padding: 0;
   background: #050505;
 }
+@keyframes glowPulse {
+  0% {
+    opacity: 0.18;
+    transform: scale(0.96);
+    filter: blur(34px);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: scale(1.03);
+    filter: blur(48px);
+  }
+
+  100% {
+    opacity: 0.18;
+    transform: scale(0.96);
+    filter: blur(34px);
+  }
+}
+
+.card-glow {
+  position: absolute;
+  inset: 8%;
+  z-index: -1;
+  border-radius: 40px;
+  background: rgba(255, 255, 255, 0.85);
+  animation: glowPulse 3.5s ease-in-out infinite;
+  pointer-events: none;
+}

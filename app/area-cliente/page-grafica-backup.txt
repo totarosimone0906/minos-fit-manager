@@ -1,0 +1,864 @@
+"use client"
+
+import Image from "next/image"
+import { useState, type ReactNode } from "react"
+
+type Stato = "ATTIVO" | "IN SCADENZA" | "SCADUTO" | "NON IMPOSTATO"
+
+type Sezione = {
+  id: string
+  nome: string
+  icona: ReactNode
+}
+
+const sezioni: Sezione[] = [
+  { id: "home", nome: "Home", icona: <HomeIcon /> },
+  { id: "abbonamento", nome: "Abbonamento", icona: <CardIcon /> },
+  { id: "quota", nome: "Quota associativa", icona: <UsersIcon /> },
+  { id: "certificato", nome: "Certificato medico", icona: <MedicalIcon /> },
+  { id: "prenotazioni", nome: "Prenotazioni PT", icona: <CalendarIcon /> },
+  { id: "schede", nome: "Schede", icona: <WorkoutIcon /> },
+  { id: "ia", nome: "Assistente IA", icona: <ChatIcon /> },
+  { id: "contatti", nome: "Contatti", icona: <PhoneIcon /> },
+]
+
+export default function AreaClientePage() {
+  const [menuAperto, setMenuAperto] = useState(false)
+  const [notificheAperte, setNotificheAperte] = useState(false)
+  const [sezioneAttiva, setSezioneAttiva] = useState(0)
+
+  const cliente = {
+    nome: "Mario",
+    cognome: "Rossi",
+    codice: "MF-000117",
+
+    abbonamento: "Mensile",
+    statoAbbonamento: "ATTIVO" as Stato,
+    scadenzaAbbonamento: "18/07/2026",
+
+    statoQuota: "ATTIVO" as Stato,
+    scadenzaQuota: "31/12/2026",
+
+    statoCertificato: "IN SCADENZA" as Stato,
+    scadenzaCertificato: "22/07/2026",
+  }
+
+  function vaiAllaSezione(indice: number) {
+    setSezioneAttiva(indice)
+    setMenuAperto(false)
+  }
+
+  function schedaPrecedente() {
+    setSezioneAttiva((indice) =>
+      indice === 0 ? sezioni.length - 1 : indice - 1
+    )
+  }
+
+  function schedaSuccessiva() {
+    setSezioneAttiva((indice) =>
+      indice === sezioni.length - 1 ? 0 : indice + 1
+    )
+  }
+
+  return (
+    <main className="min-h-screen overflow-x-hidden bg-[#060708] text-white">
+      {/* SFONDO */}
+      <div className="pointer-events-none fixed inset-0">
+        <div className="absolute left-1/2 top-1/3 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-red-950/10 blur-[150px]" />
+
+        <div
+          className="absolute inset-0 opacity-[0.045]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+            backgroundSize: "22px 22px",
+          }}
+        />
+      </div>
+
+      {/* HEADER */}
+      <header className="relative z-30 mx-auto flex h-[100px] w-full max-w-[1100px] items-center justify-center px-5">
+        <div className="absolute left-5">
+  <button
+    type="button"
+    onClick={() => setMenuAperto(true)}
+    className="flex h-12 w-12 items-center justify-center rounded-xl text-white transition hover:bg-white/5"
+    aria-label="Apri menu"
+  >
+    <MenuIcon />
+  </button>
+</div>
+
+        <Image
+          src="/logo.png"
+          alt="MinosFit"
+          width={220}
+          height={80}
+          priority
+          className="h-12 w-auto object-contain sm:h-14"
+        />
+      </header>
+
+      {/* CONTENUTO */}
+      <section className="relative z-10 mx-auto flex w-full max-w-[820px] flex-col items-center px-4 pb-36 pt-5">
+        {/* FRECCIA SOPRA */}
+        <button
+          type="button"
+          onClick={schedaPrecedente}
+          className="mb-8 flex h-14 w-24 items-center justify-center rounded-[22px] border border-zinc-700 bg-gradient-to-b from-zinc-900 to-black shadow-[0_12px_28px_rgba(0,0,0,0.7)] transition hover:border-red-600"
+          aria-label="Scheda precedente"
+        >
+          <ChevronUpIcon />
+        </button>
+
+        {/* CARD PRINCIPALE */}
+        {sezioneAttiva === 0 ? (
+          <TesseraCliente cliente={cliente} />
+        ) : (
+          <SchedaSecondaria
+            sezione={sezioni[sezioneAttiva]}
+            cliente={cliente}
+          />
+        )}
+
+        {/* FRECCIA SOTTO */}
+        <button
+          type="button"
+          onClick={schedaSuccessiva}
+          className="mt-8 flex h-14 w-24 items-center justify-center rounded-[22px] border border-zinc-700 bg-gradient-to-b from-zinc-900 to-black shadow-[0_12px_28px_rgba(0,0,0,0.7)] transition hover:border-red-600"
+          aria-label="Scheda successiva"
+        >
+          <ChevronDownIcon />
+        </button>
+
+        {/* PALLINI */}
+        <div className="mt-7 flex items-center justify-center gap-3">
+          {sezioni.map((sezione, indice) => (
+            <button
+              key={sezione.id}
+              type="button"
+              onClick={() => vaiAllaSezione(indice)}
+              className={`h-3.5 w-3.5 rounded-full transition ${
+                sezioneAttiva === indice
+                  ? "scale-110 bg-red-600"
+                  : "bg-zinc-700 hover:bg-zinc-500"
+              }`}
+              aria-label={`Apri ${sezione.nome}`}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* BARRA IN BASSO */}
+      <nav className="fixed bottom-4 left-1/2 z-30 flex w-[calc(100%-24px)] max-w-[760px] -translate-x-1/2 items-center justify-around rounded-[34px] border border-zinc-800 bg-black/90 px-3 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.8)] backdrop-blur-xl">
+        <BottomNavButton
+          attivo
+          testo="Home"
+          icona={<HomeIcon />}
+          onClick={() => vaiAllaSezione(0)}
+        />
+
+        <BottomNavButton
+          testo="Prenotazioni"
+          icona={<CalendarIcon />}
+          onClick={() => vaiAllaSezione(4)}
+        />
+
+        <BottomNavButton
+          testo="Chat"
+          icona={<ChatIcon />}
+          onClick={() => vaiAllaSezione(6)}
+        />
+
+        <BottomNavButton
+          testo="Notifiche"
+          icona={<BellIcon />}
+          onClick={() => setNotificheAperte(true)}
+        />
+
+        <BottomNavButton
+          testo="Profilo"
+          icona={<ProfileIcon />}
+          onClick={() => setMenuAperto(true)}
+        />
+      </nav>
+
+      {/* SFONDO SIDEBAR */}
+      {menuAperto && (
+        <button
+          type="button"
+          onClick={() => setMenuAperto(false)}
+          className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm"
+          aria-label="Chiudi menu"
+        />
+      )}
+
+      {/* SIDEBAR */}
+      <aside
+        className={`fixed left-0 top-0 z-50 h-full w-[85%] max-w-[350px] border-r border-red-600/20 bg-[#090a0b] p-5 shadow-[20px_0_60px_rgba(0,0,0,0.8)] transition-transform duration-300 ${
+          menuAperto ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <Image
+            src="/logo.png"
+            alt="MinosFit"
+            width={170}
+            height={70}
+            className="h-14 w-auto object-contain"
+          />
+
+          <button
+            type="button"
+            onClick={() => setMenuAperto(false)}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <p className="mb-3 mt-8 px-3 text-[10px] font-black uppercase tracking-[0.25em] text-zinc-600">
+          Area cliente
+        </p>
+
+        <nav className="space-y-1">
+          {sezioni.map((sezione, indice) => (
+            <button
+              key={sezione.id}
+              type="button"
+              onClick={() => vaiAllaSezione(indice)}
+              className={`flex w-full items-center gap-4 rounded-xl px-4 py-3 text-left text-sm font-bold transition ${
+                sezioneAttiva === indice
+                  ? "bg-red-600 text-white"
+                  : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
+              }`}
+            >
+              <span className="flex h-7 w-7 items-center justify-center">
+                {sezione.icona}
+              </span>
+
+              <span>{sezione.nome}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="my-6 border-t border-zinc-800" />
+
+        <nav className="space-y-1">
+          <MenuSecondario testo="Eventi" icona={<CalendarIcon />} />
+          <MenuSecondario testo="Il mio profilo" icona={<ProfileIcon />} />
+          <MenuSecondario testo="Esci" icona={<ExitIcon />} rosso />
+        </nav>
+      </aside>
+
+      {/* SFONDO NOTIFICHE */}
+      {notificheAperte && (
+        <button
+          type="button"
+          onClick={() => setNotificheAperte(false)}
+          className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm"
+          aria-label="Chiudi notifiche"
+        />
+      )}
+
+      {/* PANNELLO NOTIFICHE */}
+      <aside
+        className={`fixed right-0 top-0 z-50 h-full w-[88%] max-w-[380px] border-l border-red-600/20 bg-[#090a0b] p-5 shadow-[-20px_0_60px_rgba(0,0,0,0.8)] transition-transform duration-300 ${
+          notificheAperte ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-red-500">
+              Notifiche
+            </p>
+
+            <h2 className="mt-1 text-3xl font-black">Messaggi</h2>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setNotificheAperte(false)}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mt-8 space-y-4">
+          <Notifica
+            titolo="Certificato in scadenza"
+            testo="Il certificato medico scadrà il 22/07/2026."
+          />
+
+          <Notifica
+            titolo="Nuova scheda disponibile"
+            testo="Il tuo personal trainer ha caricato una nuova scheda."
+          />
+        </div>
+      </aside>
+    </main>
+  )
+}
+
+function TesseraCliente({
+  cliente,
+}: {
+  cliente: {
+    nome: string
+    cognome: string
+    codice: string
+    statoAbbonamento: Stato
+    statoQuota: Stato
+    statoCertificato: Stato
+  }
+}) {
+  return (
+    <article className="relative w-full overflow-hidden rounded-[32px] border border-zinc-500/70 bg-[#101112] shadow-[0_35px_80px_rgba(0,0,0,0.75)]">
+      {/* TEXTURE */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.14]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(255,255,255,.08) 4px)",
+        }}
+      />
+
+      <div className="grid min-h-[390px] grid-cols-[29%_71%] sm:min-h-[430px]">
+       {/* LATO SINISTRO */}
+<div className="relative overflow-hidden border-r border-red-600/30 bg-[#090a0b]">
+  <div
+    className="absolute inset-0 opacity-20"
+    style={{
+      backgroundImage:
+        "radial-gradient(circle at center, rgba(255,255,255,.18) 1px, transparent 1px)",
+      backgroundSize: "9px 9px",
+    }}
+  />
+
+  <div className="absolute -right-[56px] top-[-30px] h-[125%] w-[82px] rotate-[15deg] border-r-2 border-red-600 bg-black/80 shadow-[12px_0_35px_rgba(239,68,68,0.12)]" />
+
+  <Image
+    src="/logo-small.png"
+    alt="Logo MF"
+    width={150}
+    height={150}
+    className="
+      absolute
+      left-1/2
+      top-1/2
+      z-10
+      h-28
+      w-auto
+      -translate-x-1/2
+      -translate-y-1/2
+      object-contain
+      sm:h-32
+    "
+    priority
+  />
+</div>
+
+        {/* LATO DESTRO */}
+        <div className="relative flex flex-col p-6 sm:p-9">
+          <div className="flex justify-center">
+            <Image
+              src="/logo.png"
+              alt="MinosFit"
+              width={290}
+              height={100}
+              className="h-16 w-auto object-contain sm:h-20"
+            />
+          </div>
+
+          <div className="mt-7 grid grid-cols-2 gap-5 sm:mt-9">
+            <DatoCliente etichetta="Nome" valore={cliente.nome} />
+            <DatoCliente etichetta="Cognome" valore={cliente.cognome} />
+          </div>
+
+          <div className="my-6 border-t border-zinc-700/80" />
+
+          <div className="space-y-4">
+            <RigaStato
+              icona={<CalendarIcon />}
+              testo="Abbonamento"
+              stato={cliente.statoAbbonamento}
+            />
+
+            <RigaStato
+              icona={<UsersIcon />}
+              testo="Quota associativa"
+              stato={cliente.statoQuota}
+            />
+
+            <RigaStato
+              icona={<MedicalIcon />}
+              testo="Certificato medico"
+              stato={cliente.statoCertificato}
+            />
+          </div>
+
+          <p className="absolute bottom-4 right-6 text-xs font-black tracking-wider text-red-500 sm:text-sm">
+            {cliente.codice}
+          </p>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function SchedaSecondaria({
+  sezione,
+  cliente,
+}: {
+  sezione: Sezione
+  cliente: {
+    scadenzaAbbonamento: string
+    scadenzaQuota: string
+    scadenzaCertificato: string
+  }
+}) {
+  let descrizione = ""
+  let pulsante = ""
+
+  if (sezione.id === "abbonamento") {
+    descrizione = `Scadenza abbonamento: ${cliente.scadenzaAbbonamento}`
+    pulsante = "Rinnova abbonamento"
+  }
+
+  if (sezione.id === "quota") {
+    descrizione = `Scadenza quota associativa: ${cliente.scadenzaQuota}`
+    pulsante = "Rinnova quota associativa"
+  }
+
+  if (sezione.id === "certificato") {
+    descrizione = `Scadenza certificato: ${cliente.scadenzaCertificato}`
+    pulsante = "Carica certificato"
+  }
+
+  if (sezione.id === "prenotazioni") {
+    descrizione = "Visualizza disponibilità e prenota il tuo personal trainer."
+    pulsante = "Apri calendario PT"
+  }
+
+  if (sezione.id === "schede") {
+    descrizione = "Consulta la tua scheda di allenamento."
+    pulsante = "Apri la mia scheda"
+  }
+
+  if (sezione.id === "ia") {
+    descrizione = "Parla con l’assistente virtuale MinosFit."
+    pulsante = "Apri assistente IA"
+  }
+
+  if (sezione.id === "contatti") {
+    descrizione = "Contatta la palestra o il tuo personal trainer."
+    pulsante = "Apri contatti"
+  }
+
+  return (
+    <article className="flex min-h-[390px] w-full flex-col rounded-[32px] border border-zinc-700 bg-gradient-to-br from-[#151617] to-[#090a0b] p-8 shadow-[0_35px_80px_rgba(0,0,0,0.75)]">
+      <div className="flex items-center gap-4 text-red-500">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full border border-red-600/50 bg-red-950/20">
+          {sezione.icona}
+        </span>
+
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">
+            Area cliente
+          </p>
+
+          <h2 className="mt-1 text-3xl font-black text-white">
+            {sezione.nome}
+          </h2>
+        </div>
+      </div>
+
+      <div className="mt-9 rounded-2xl border border-zinc-800 bg-black/40 p-6">
+        <p className="text-sm leading-7 text-zinc-300">{descrizione}</p>
+      </div>
+
+      <button
+        type="button"
+        className="mt-auto rounded-2xl bg-red-600 px-6 py-4 text-sm font-black uppercase tracking-wide transition hover:bg-red-500"
+      >
+        {pulsante}
+      </button>
+    </article>
+  )
+}
+
+function DatoCliente({
+  etichetta,
+  valore,
+}: {
+  etichetta: string
+  valore: string
+}) {
+  return (
+    <div>
+      <p className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500 sm:text-xs">
+        {etichetta}
+      </p>
+
+      <p className="mt-1 text-xl font-black text-white sm:text-2xl">
+        {valore}
+      </p>
+    </div>
+  )
+}
+
+function RigaStato({
+  icona,
+  testo,
+  stato,
+}: {
+  icona: ReactNode
+  testo: string
+  stato: Stato
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-700 bg-black/35 text-red-500">
+        {icona}
+      </span>
+
+      <span className="min-w-0 flex-1 text-sm font-bold text-zinc-100 sm:text-base">
+        {testo}
+      </span>
+
+      <BadgeStato stato={stato} />
+    </div>
+  )
+}
+
+function BadgeStato({ stato }: { stato: Stato }) {
+  let stile = "border-zinc-600 text-zinc-400"
+
+  if (stato === "ATTIVO") {
+    stile =
+      "border-emerald-500 text-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.13)]"
+  }
+
+  if (stato === "IN SCADENZA") {
+    stile =
+      "border-orange-500 text-orange-400 shadow-[0_0_16px_rgba(249,115,22,0.13)]"
+  }
+
+  if (stato === "SCADUTO") {
+    stile =
+      "border-red-600 text-red-500 shadow-[0_0_16px_rgba(220,38,38,0.13)]"
+  }
+
+  return (
+    <span
+      className={`inline-flex min-w-[92px] items-center justify-center rounded-full border px-3 py-2 text-center text-[10px] font-black uppercase tracking-wide sm:min-w-[112px] sm:text-xs ${stile}`}
+    >
+      {stato}
+    </span>
+  )
+}
+
+function BottomNavButton({
+  testo,
+  icona,
+  attivo = false,
+  onClick,
+}: {
+  testo: string
+  icona: ReactNode
+  attivo?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative flex min-w-[55px] flex-col items-center gap-1 rounded-2xl px-2 py-2 text-[10px] font-bold transition sm:min-w-[90px] sm:text-sm ${
+        attivo ? "text-red-500" : "text-zinc-500 hover:text-white"
+      }`}
+    >
+      <span className="flex h-7 w-7 items-center justify-center">{icona}</span>
+      <span>{testo}</span>
+
+      {attivo && (
+        <span className="absolute -bottom-1 h-[3px] w-12 rounded-full bg-red-600" />
+      )}
+    </button>
+  )
+}
+
+function MenuSecondario({
+  testo,
+  icona,
+  rosso = false,
+}: {
+  testo: string
+  icona: ReactNode
+  rosso?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      className={`flex w-full items-center gap-4 rounded-xl px-4 py-3 text-left text-sm font-bold transition ${
+        rosso
+          ? "text-red-500 hover:bg-red-950/30"
+          : "text-zinc-300 hover:bg-zinc-900 hover:text-white"
+      }`}
+    >
+      <span className="flex h-7 w-7 items-center justify-center">{icona}</span>
+      <span>{testo}</span>
+    </button>
+  )
+}
+
+function Notifica({
+  titolo,
+  testo,
+}: {
+  titolo: string
+  testo: string
+}) {
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-black/35 p-5">
+      <p className="font-black text-white">{titolo}</p>
+
+      <p className="mt-2 text-sm leading-6 text-zinc-400">{testo}</p>
+    </div>
+  )
+}
+
+/* ICONE */
+
+function MenuIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-9 w-9"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  )
+}
+
+function BellIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-7 w-7"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+      <path d="M10 21h4" />
+    </svg>
+  )
+}
+
+function HomeIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-7 w-7"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m3 11 9-8 9 8" />
+      <path d="M5 10v10h14V10" />
+      <path d="M9 20v-6h6v6" />
+    </svg>
+  )
+}
+
+function CalendarIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M8 3v4M16 3v4M3 10h18" />
+    </svg>
+  )
+}
+
+function ChatIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-7 w-7"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+      <path d="M8 10h.01M12 10h.01M16 10h.01" />
+    </svg>
+  )
+}
+
+function ProfileIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-7 w-7"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="7" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </svg>
+  )
+}
+
+function UsersIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="9" cy="8" r="4" />
+      <path d="M2 21a7 7 0 0 1 14 0" />
+      <path d="M16 4a4 4 0 0 1 0 8" />
+      <path d="M18 14a7 7 0 0 1 4 7" />
+    </svg>
+  )
+}
+
+function MedicalIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" />
+    </svg>
+  )
+}
+
+function CardIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 10h18" />
+    </svg>
+  )
+}
+
+function WorkoutIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <path d="M6 9v6M18 9v6M3 10v4M21 10v4M6 12h12" />
+    </svg>
+  )
+}
+
+function PhoneIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.4 19.4 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z" />
+    </svg>
+  )
+}
+
+function ExitIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-6 w-6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M10 17l5-5-5-5" />
+      <path d="M15 12H3" />
+      <path d="M15 3h6v18h-6" />
+    </svg>
+  )
+}
+
+function ChevronUpIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-8 w-8 text-red-600"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m6 15 6-6 6 6" />
+    </svg>
+  )
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-8 w-8 text-red-600"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  )
+}
