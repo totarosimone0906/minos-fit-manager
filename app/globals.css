@@ -5,32 +5,181 @@ html, body {
   padding: 0;
   background: #050505;
 }
-@keyframes glowPulse {
-  0% {
-    opacity: 0.18;
-    transform: scale(0.96);
-    filter: blur(34px);
+/* ==================================================
+   EFFETTI TESSERA MINOS FIT
+================================================== */
+
+@keyframes minosGlowPulse {
+  0%,
+  100% {
+    opacity: 0.16;
+    transform: scale(0.95);
+    filter: blur(28px);
   }
 
   50% {
-    opacity: 0.55;
-    transform: scale(1.03);
-    filter: blur(48px);
+    opacity: 0.58;
+    transform: scale(1.035);
+    filter: blur(45px);
+  }
+}
+
+@keyframes minosRedAura {
+  0%,
+  100% {
+    opacity: 0.08;
+    transform: scale(0.96);
+  }
+
+  50% {
+    opacity: 0.22;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes minosCardBorder {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+      0 24px 55px rgba(0, 0, 0, 0.75);
+  }
+
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+      inset 0 0 26px rgba(255, 255, 255, 0.035),
+      0 28px 70px rgba(0, 0, 0, 0.82),
+      0 0 24px rgba(255, 255, 255, 0.08);
+  }
+}
+
+@keyframes minosSheen {
+  0% {
+    transform: translateX(-170%) skewX(-20deg);
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 0.04;
+  }
+
+  40% {
+    opacity: 0.18;
+  }
+
+  65% {
+    opacity: 0.04;
   }
 
   100% {
-    opacity: 0.18;
-    transform: scale(0.96);
-    filter: blur(34px);
+    transform: translateX(270%) skewX(-20deg);
+    opacity: 0;
   }
+}
+
+.card-stage {
+  isolation: isolate;
 }
 
 .card-glow {
   position: absolute;
   inset: 8%;
+  z-index: -2;
+  border-radius: 40px;
+  pointer-events: none;
+
+  background: rgba(255, 255, 255, 0.82);
+  animation: minosGlowPulse 4.8s ease-in-out infinite;
+}
+
+.card-red-aura {
+  position: absolute;
+  inset: 4%;
   z-index: -1;
   border-radius: 40px;
-  background: rgba(255, 255, 255, 0.85);
-  animation: glowPulse 3.5s ease-in-out infinite;
   pointer-events: none;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(220, 38, 38, 0.4) 0%,
+      rgba(220, 38, 38, 0.12) 40%,
+      transparent 72%
+    );
+
+  filter: blur(34px);
+  animation: minosRedAura 5.6s ease-in-out infinite;
+}
+
+.member-card {
+  animation: minosCardBorder 4.8s ease-in-out infinite;
+  transform: translateZ(0);
+  will-change: box-shadow;
+}
+
+.card-sheen {
+  position: absolute;
+  top: -35%;
+  bottom: -35%;
+  left: -35%;
+  z-index: 5;
+  width: 24%;
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.22),
+      transparent
+    );
+
+  filter: blur(4px);
+  transform: translateX(-170%) skewX(-20deg);
+  animation: minosSheen 7s ease-in-out infinite 1.2s;
+}
+
+.card-inner-light {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: inherit;
+  pointer-events: none;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.025);
+}
+
+/* Riduce gli effetti per chi disattiva le animazioni */
+@media (prefers-reduced-motion: reduce) {
+  .card-glow,
+  .card-red-aura,
+  .member-card,
+  .card-sheen {
+    animation: none !important;
+  }
+
+  .card-glow {
+    opacity: 0.22;
+  }
+}
+
+/* Effetti più leggeri sui telefoni meno potenti */
+@media (max-width: 640px) {
+  .card-glow {
+    inset: 10%;
+    filter: blur(26px);
+  }
+
+  .card-red-aura {
+    inset: 7%;
+    filter: blur(24px);
+  }
+
+  .card-sheen {
+    width: 19%;
+    animation-duration: 8s;
+  }
 }

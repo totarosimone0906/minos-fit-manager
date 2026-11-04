@@ -7,6 +7,9 @@ export default function ClienteDettaglioPage() {
   const { id } = useParams()
   const [cliente, setCliente] = useState<any>(null)
   const [saving, setSaving]=useState(false)
+  const [tipoRinnovo, setTipoRinnovo] = useState("mensile")
+const [metodoPagamento, setMetodoPagamento] = useState("contanti")
+const [rinnovoInCorso, setRinnovoInCorso] = useState(false)
   const schedaInputRef=
   useRef<HTMLInputElement>(null)
   const [titoloScheda,setTitoloScheda] = useState("")
@@ -15,7 +18,16 @@ export default function ClienteDettaglioPage() {
     caricaCliente()
   }, [])
 
-  async function salvaAbbonamento() {
+  async function rinnovaAbbonamento() {
+  const { data, error } = await supabase.auth.getSession()
+
+  if (error || !data.session?.access_token) {
+    alert("Sessione scaduta. Effettua nuovamente l'accesso.")
+    return
+  }
+
+  alert("Sessione amministratore disponibile. Collegamento pronto!")
+}
 async function caricaScheda(e: any) {
   const file = e.target.files?.[0]
 
@@ -59,19 +71,18 @@ async function caricaScheda(e: any) {
     return
   }
 
-  alert("Scheda caricata correttamente!")
+   alert("Scheda caricata correttamente!")
   setTitoloScheda("")
 }
 
+async function salvaAbbonamento() {
   setSaving(true)
 
   const { error } = await supabase
     .from("profiles")
     .update({
 
-      abbonamento: cliente.abbonamento,
-      abbonamento_pagamento: cliente.abbonamento_pagamento,
-      abbonamento_scadenza: cliente.abbonamento_scadenza,
+      
 
       quota_associativa_attiva: cliente.quota_associativa_attiva,
       quota_associativa_pagamento: cliente.quota_associativa_pagamento,
@@ -116,14 +127,13 @@ async function caricaScheda(e: any) {
     )
   }
 
-  function caricaScheda(event: ChangeEvent<HTMLInputElement, HTMLInputElement>): void {
-    throw new Error("Function not implemented.")
-  }
-
-  return (
+   return (
     <main className="min-h-screen bg-[#050505] text-white p-8">
-      <a href="/admin/clienti" className="text-zinc-400">
-        ← Torna ai clienti
+          <a
+        href="/admin/clienti"
+        className="inline-block mb-8 px-5 py-3 bg-zinc-900 border border-zinc-700 rounded-xl text-white font-bold hover:bg-red-600 transition"
+      >
+        ← Torna all'elenco clienti
       </a>
 
       <h1 className="text-5xl font-black text-red-500 mt-6 mb-2">
@@ -148,25 +158,14 @@ async function caricaScheda(e: any) {
 
   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-    <select
-      value={cliente.abbonamento || ""}
-      onChange={(e) =>
-        setCliente({
-          ...cliente,
-          abbonamento: e.target.value,
-        })
-      }
-      className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4"
-    >
-      <option value="">Seleziona abbonamento</option>
-      <option>Mensile</option>
-      <option>Trimestrale</option>
-      <option>Semestrale</option>
-      <option>Annuale</option>
-      <option>Full Time</option>
-      <option>PT</option>
-      <option>Admin</option>
-    </select>
+       <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4">
+      <p className="text-xs text-zinc-400 mb-1">
+        Abbonamento attuale
+      </p>
+      <p className="font-bold text-white">
+        {cliente.abbonamento || "Nessun abbonamento"}
+      </p>
+    </div>
 
     <input
       type="text"
@@ -181,29 +180,31 @@ async function caricaScheda(e: any) {
       className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4"
     />
 
-    <input
-      type="date"
-      value={cliente.abbonamento_pagamento || ""}
-      onChange={(e) =>
-        setCliente({
-          ...cliente,
-          abbonamento_pagamento: e.target.value,
-        })
-      }
-      className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4"
-    />
+       <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4">
+      <p className="text-xs text-zinc-400 mb-1">
+        Ultimo pagamento abbonamento
+      </p>
+      <p className="font-bold text-white">
+        {cliente.abbonamento_pagamento
+          ? new Date(
+              `${cliente.abbonamento_pagamento}T12:00:00`
+            ).toLocaleDateString("it-IT")
+          : "Nessun pagamento registrato"}
+      </p>
+    </div>
 
-    <input
-      type="date"
-      value={cliente.abbonamento_scadenza || ""}
-      onChange={(e) =>
-        setCliente({
-          ...cliente,
-          abbonamento_scadenza: e.target.value,
-        })
-      }
-      className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4"
-    />
+     <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4">
+      <p className="text-xs text-zinc-400 mb-1">
+        Scadenza abbonamento
+      </p>
+      <p className="font-bold text-white">
+        {cliente.abbonamento_scadenza
+          ? new Date(
+              `${cliente.abbonamento_scadenza}T12:00:00`
+            ).toLocaleDateString("it-IT")
+          : "Nessuna scadenza registrata"}
+      </p>
+    </div>
 
   </div>
 
@@ -247,6 +248,52 @@ async function caricaScheda(e: any) {
   </button>
 
 </section>
+
+<section className="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 mt-6">
+  <h2 className="text-2xl font-black text-red-500 mb-5">
+    💳 Rinnovo abbonamento
+  </h2>
+
+  <div className="grid gap-4">
+    <label className="font-bold">Tipo di abbonamento</label>
+    <select
+      value={tipoRinnovo}
+      onChange={(e) => setTipoRinnovo(e.target.value)}
+      className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4"
+    >
+      <option value="mensile">Mensile — 40 €</option>
+      <option value="trimestrale">Trimestrale — 110 €</option>
+      <option value="semestrale">Semestrale — 200 €</option>
+      <option value="annuale">Annuale — 360 €</option>
+    </select>
+
+    <label className="font-bold">Metodo di pagamento</label>
+    <select
+      value={metodoPagamento}
+      onChange={(e) => setMetodoPagamento(e.target.value)}
+      className="bg-zinc-900 border border-zinc-700 rounded-2xl p-4"
+    >
+      <option value="contanti">Contanti</option>
+      <option value="pos">POS</option>
+      <option value="bonifico">Bonifico</option>
+    </select>
+
+    <p className="text-sm text-zinc-400">
+      Il pagamento sarà registrato nello storico del cliente.
+      La scadenza verrà aggiornata automaticamente.
+    </p>
+
+    <button
+  type="button"
+  onClick={rinnovaAbbonamento}
+  disabled={rinnovoInCorso}
+      className="w-full bg-zinc-700 rounded-2xl p-4 font-black opacity-60 cursor-not-allowed"
+    >
+      REGISTRA PAGAMENTO E RINNOVA
+    </button>
+  </div>
+</section>
+
   <button
     onClick={salvaAbbonamento}
     disabled={saving}

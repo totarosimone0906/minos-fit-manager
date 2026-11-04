@@ -1,9 +1,26 @@
 
+"use client"
 
 import Link from "next/link"
 import Image from "next/image"
+import { supabase } from "../lib/supabase"
 
 export default function AdminPage() {
+
+  async function esciDallAdmin() {
+    const { error } = await supabase.auth.signOut()
+
+    if (error) {
+      alert("Errore durante il logout: " + error.message)
+      return
+    }
+
+    localStorage.removeItem("utente")
+    localStorage.removeItem("cliente")
+
+    window.location.replace("/login/accesso")
+  }
+
   const menu = [
   { nome: "Nuovo cliente", icona: "➕", href: "/admin/nuovo-cliente" },
   { nome: "Storico accessi", icona: "📋", href: "/admin/storico-accessi" },
@@ -16,27 +33,37 @@ export default function AdminPage() {
 ]
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white p-6">
-      <div className="flex gap-10">
-        <aside className="w-[200px] shrink-0">
-          <div className="min-h-[calc(100vh-48px)] border border-zinc-500 bg-zinc-800 rounded-2xl p-6 shadow-xl">
-            <nav className="flex flex-col gap-12">
-              {menu.map((item) => (
-                
-                 <Link
-  key={item.nome}
-  href={item.href}
-  className="flex items-center gap-3 text-left text-sm font-black hover:text-red-400 transition"
->
-  <span>{item.icona}</span>
-  <span>{item.nome}</span>
-</Link>
-              ))}
-            </nav>
-          </div>
+    <main className="h-[calc(100dvh-76px)] overflow-hidden bg-[#050505] text-white p-6">
+      <div className="flex h-full min-h-0 gap-6">
+   <aside className="w-[200px] shrink-0 self-stretch">
+  <div className="h-full border border-zinc-500 bg-zinc-800 rounded-2xl p-6 shadow-xl flex flex-col">
+
+  <nav className="flex flex-col gap-12">
+    {menu.map((item) => (
+      <Link
+        key={item.nome}
+        href={item.href}
+        className="flex items-center gap-3 text-left text-sm font-black hover:text-red-400 transition"
+      >
+        <span>{item.icona}</span>
+        <span>{item.nome}</span>
+      </Link>
+    ))}
+  </nav>
+
+  <button
+    type="button"
+    onClick={esciDallAdmin}
+    className="mt-auto pt-6 flex items-center gap-3 text-left text-sm font-black text-red-500 hover:text-red-400 transition"
+  >
+    <span>🚪</span>
+    <span>ESCI DALL'ADMIN</span>
+  </button>
+
+</div>
         </aside>
 
-        <section className="flex-1">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
        <div className="flex justify-between items-center mb-8">
 
   <div className="flex items-center gap-6">
@@ -53,15 +80,6 @@ export default function AdminPage() {
     </h1>
   </div>
 
-  <div className="flex gap-4">
-    <button className="bg-green-600 hover:bg-green-500 px-8 py-4 rounded-xl font-black text-lg">
-      🟢 APRI ENTRATA
-    </button>
-
-    <button className="bg-red-600 hover:bg-red-500 px-8 py-4 rounded-xl font-black text-lg">
-      🔴 APRI USCITA
-    </button>
-  </div>
 
 </div>
          <div className="border border-zinc-700 rounded-2xl p-6 mb-6 bg-zinc-950 min-h-[170px]">
@@ -81,9 +99,10 @@ export default function AdminPage() {
   </div>
 </div>
 
-          <div className="border border-zinc-700 rounded-2xl overflow-hidden bg-zinc-950">
-            <table className="w-full text-xs">
-              <thead className="bg-zinc-900 text-red-500">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-950">
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto">
+  <table className="w-full text-xs">
+             <thead className="sticky top-0 z-10 bg-zinc-900 text-red-500">
   <tr>
     <th className="p-3">Codice tessera</th>
     <th className="p-3">Cognome</th>
@@ -112,7 +131,8 @@ export default function AdminPage() {
     <td className="p-3">0</td>
   </tr>
 </tbody>
-            </table>
+                       </table>
+            </div>
           </div>
         </section>
       </div>

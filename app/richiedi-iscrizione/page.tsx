@@ -48,6 +48,7 @@ type FormRegistrazione = {
   genitoreEmail: string
 
   privacyAccettata: boolean
+  terminiAccettati: boolean
   consensoGenitore: boolean
 }
 
@@ -77,6 +78,7 @@ const statoIniziale: FormRegistrazione = {
   genitoreEmail: "",
 
   privacyAccettata: false,
+  terminiAccettati: false,
   consensoGenitore: false,
 }
 
@@ -360,6 +362,11 @@ export default function RichiediIscrizionePage() {
       return "Devi accettare l’informativa sulla privacy"
     }
 
+    if (!form.terminiAccettati) {
+  alert("Devi leggere e accettare i Termini e Condizioni per continuare.");
+  return false;
+}
+
     if (minorenne && !form.consensoGenitore) {
       return "È necessario il consenso del genitore o tutore"
     }
@@ -428,7 +435,22 @@ export default function RichiediIscrizionePage() {
         return
       }
 
+const { data: authData, error: authError } =
+  await supabase.auth.signUp({
+    email: emailPulita,
+    password: form.password,
+  })
+
+if (authError) {
+  throw authError
+}
+
+if (!authData.user) {
+  throw new Error("Impossibile creare l'account di autenticazione")
+}
+
       const nuovoProfilo = {
+        id: authData.user.id,
         nome: formattaNome(form.nome),
         cognome: formattaNome(form.cognome),
         email: emailPulita,
@@ -440,7 +462,7 @@ export default function RichiediIscrizionePage() {
           In seguito sposteremo le password dentro Supabase Auth,
           senza salvarle direttamente nella tabella profiles.
         */
-        password: form.password,
+       
 
         ruolo: "cliente",
         stato_account: minorenne ? "da_approvare" : "attivo",
@@ -458,7 +480,12 @@ export default function RichiediIscrizionePage() {
         nazionalita: formattaTesto(form.nazionalita),
         codice_fiscale: codiceFiscalePulito,
 
-        privacy_accettata: true,
+        privacy_accettata: form.privacyAccettata,
+privacy_accettata_il: new Date().toISOString(),
+privacy_versione: "2026-10-03",
+termini_accettati: form.terminiAccettati,
+termini_accettati_il: new Date().toISOString(),
+termini_versione: "2026-10-07",
 
         genitore_nome: minorenne
           ? formattaNome(form.genitoreNome)
@@ -1080,11 +1107,42 @@ export default function RichiediIscrizionePage() {
                   />
 
                   <span className="text-sm leading-relaxed text-zinc-300">
-                    Dichiaro di aver letto e accettato
-                    l’informativa sulla privacy e autorizzo il
-                    trattamento dei dati personali.
-                  </span>
+  Dichiaro di aver letto e compreso l&apos;
+  <Link
+    href="/privacy"
+    target="_blank"
+    className="font-bold text-red-400 underline underline-offset-2 transition hover:text-red-300"
+  >
+    Informativa Privacy
+  </Link>
+  {" "}relativa al trattamento dei miei dati personali.
+</span>
                 </label>
+                <label className="flex items-start gap-3">
+  <input
+    type="checkbox"
+    checked={form.terminiAccettati}
+    onChange={(e) =>
+      setForm({
+        ...form,
+        terminiAccettati: e.target.checked,
+      })
+    }
+    className="mt-1 h-4 w-4 accent-red-600"
+  />
+
+  <span className="text-sm leading-relaxed text-zinc-300">
+    Dichiaro di aver letto e accettato i{" "}
+    <Link
+      href="/termini"
+      target="_blank"
+      className="font-bold text-red-400 underline underline-offset-2 transition hover:text-red-300"
+    >
+      Termini e Condizioni
+    </Link>
+    {" "}di Minos Fit A.S.D.
+  </span>
+</label>
 
                 {minorenne && (
                   <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-amber-500/25 bg-amber-950/15 p-4 transition hover:border-amber-400/50">
@@ -1100,10 +1158,20 @@ export default function RichiediIscrizionePage() {
                       className="mt-1 h-5 w-5 accent-amber-500"
                     />
 
-                    <span className="text-sm leading-relaxed text-zinc-300">
-                      Il genitore o tutore autorizza la richiesta
-                      di iscrizione del minore.
-                    </span>
+          <span className="text-sm leading-relaxed text-zinc-300">
+  Il genitore o tutore dichiara di esercitare la responsabilità
+  genitoriale o la tutela sul minore e autorizza la richiesta di
+  iscrizione e la partecipazione del minore alle attività di Minos Fit
+  A.S.D., dichiarando inoltre di aver preso visione dell&apos;
+  <Link
+    href="/privacy"
+    target="_blank"
+    className="font-bold text-amber-300 underline underline-offset-2 transition hover:text-amber-200"
+  >
+    Informativa Privacy
+  </Link>
+  .
+</span>
                   </label>
                 )}
               </div>

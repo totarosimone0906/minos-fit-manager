@@ -25,21 +25,35 @@ export default function AccessoPage() {
   const [mostraPassword, setMostraPassword] = useState(false)
   const [accessoInCorso, setAccessoInCorso] = useState(false)
 
- useEffect(() => {
+useEffect(() => {
   const elementoVideo = videoRef.current
 
-  if (!elementoVideo) {
-    return
-  }
+  if (!elementoVideo) return
 
+  elementoVideo.muted = true
+  elementoVideo.defaultMuted = true
+  elementoVideo.controls = false
   elementoVideo.currentTime = 0
 
-  elementoVideo.play().catch((errore) => {
-    console.error(
-      "Il browser non riesce ad avviare il video:",
-      errore,
-    )
-  })
+  const avviaVideo = async () => {
+    try {
+      await elementoVideo.play()
+    } catch (errore) {
+      console.error("Errore avvio video:", errore)
+    }
+  }
+
+  if (elementoVideo.readyState >= 3) {
+    void avviaVideo()
+  } else {
+    elementoVideo.addEventListener("canplay", avviaVideo, {
+      once: true,
+    })
+  }
+
+  return () => {
+    elementoVideo.removeEventListener("canplay", avviaVideo)
+  }
 }, [])
 
   function videoTerminato() {
@@ -65,52 +79,70 @@ export default function AccessoPage() {
 
     setAccessoInCorso(true)
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("email", emailPulita)
-      .eq("password", passwordPulita)
-      .single()
+   const { data: authData, error: authError } =
+  await supabase.auth.signInWithPassword({
+    email: emailPulita,
+    password: passwordPulita,
+  })
+
+if (authError || !authData.user) {
+  alert("Email o password errati")
+  setAccessoInCorso(false)
+  return
+}
+
+const { data, error } = await supabase
+  .from("profiles")
+  .select("*")
+  .eq("id", authData.user.id)
+  .single()
 
     if (error || !data) {
-      alert("Email o password errati")
-      setAccessoInCorso(false)
-      return
-    }
+  await supabase.auth.signOut()
+  alert("Profilo non trovato. Contatta lo staff.")
+  setAccessoInCorso(false)
+  return
+}
 
-    if (data.stato_account === "da_approvare") {
-      alert("Account in attesa di approvazione")
-      setAccessoInCorso(false)
-      return
-    }
+  if (data.stato_account === "da_approvare") {
+  await supabase.auth.signOut()
+  alert("Account in attesa di approvazione")
+  setAccessoInCorso(false)
+  return
+}
 
     localStorage.setItem("utente", JSON.stringify(data))
     localStorage.setItem("cliente", JSON.stringify(data))
 
     if (data.ruolo === "admin") {
-      window.location.href = "/admin/clienti"
-      return
-    }
+  window.location.replace("/admin")
+  return
+}
 
-    window.location.href = "/area-cliente"
-  }
+window.location.replace("/area-cliente")
+}
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-black text-white">
       {/* VIDEO INTRO */}
       {!erroreVideo && (
-       <video
+      <video
   ref={videoRef}
+  autoPlay
   muted
   playsInline
   preload="auto"
-  onLoadedMetadata={() => setVideoPronto(true)}
-  onCanPlay={() => setVideoPronto(true)}
+  controls={false}
+  disablePictureInPicture
+  controlsList="nodownload nofullscreen noremoteplayback"
+  onPlaying={() => setVideoPronto(true)}
   onEnded={videoTerminato}
   onError={erroreRiproduzione}
-  className="fixed inset-0 z-0 h-[100dvh] w-screen bg-black object-cover object-center"
+  className={`pointer-events-none fixed inset-0 z-0 h-[100dvh] w-screen bg-black object-cover object-center ${
+    videoPronto ? "opacity-100" : "opacity-0"
+  }`}
 >
-  <source src="/intro.mp4?v=10" type="video/mp4" />
+  <source src="/intro.mp4?v=12" type="video/mp4" />
 </video>
       )}
 
