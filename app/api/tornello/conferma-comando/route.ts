@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       typeof body.esecuzione_id !== "string" ||
       !uuidPattern.test(body.id) ||
       !uuidPattern.test(body.esecuzione_id) ||
-      !["eseguito", "errore"].includes(body.esito)
+     !["eseguito", "errore", "simulato"].includes(body.esito)
     ) {
       return NextResponse.json(
         { error: "Dati non validi" },
