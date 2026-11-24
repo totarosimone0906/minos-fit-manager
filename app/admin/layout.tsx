@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
+import { supabase } from "../lib/supabase"
 
 export default function AdminLayout({
   children,
@@ -9,51 +10,113 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
 
- function comandoTornello(direzione: "entrata" | "uscita") {
-  console.log(`Comando tornello richiesto: ${direzione}`)
-}
+  const [occupato, setOccupato] = useState(false)
+  const [messaggio, setMessaggio] = useState("")
+  const [errore, setErrore] = useState(false)
+  const bloccoComando = useRef(false)
 
-useEffect(() => {
-  function gestisciTastiera(evento: KeyboardEvent) {
-    if (evento.repeat) return
+  const comandoTornello = useCallback(async (
+    direzione: "entrata" | "uscita"
+  ) => {
 
-    const elemento = evento.target as HTMLElement | null
+    if (bloccoComando.current) return
 
-    if (
-      elemento?.isContentEditable ||
-      elemento?.closest("input, textarea, select, [contenteditable]")
-    ) {
-      return
+    bloccoComando.current = true
+    setOccupato(true)
+    setErrore(false)
+    setMessaggio("Invio comando in corso...")
+
+    try {
+
+      const { data, error } = await supabase.auth.getSession()
+
+      if (error || !data.session) {
+        throw new Error("Sessione non valida. Effettua nuovamente l'accesso.")
+      }
+
+      const risposta = await fetch("/api/admin/comando-tornello", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session.access_token}`,
+        },
+        body: JSON.stringify({ direzione }),
+        signal: AbortSignal.timeout(10000),
+      })
+
+      if (!risposta.ok) {
+        throw new Error(`Richiesta non confermata (HTTP ${risposta.status})`)
+      }
+
+      setMessaggio(
+        `Comando ${direzione.toUpperCase()} registrato`
+      )
+
+    } catch (error) {
+
+      setErrore(true)
+      setMessaggio(
+        error instanceof Error
+          ? error.message
+          : "Errore di comunicazione"
+      )
+
+    } finally {
+
+      bloccoComando.current = false
+      setOccupato(false)
+
     }
 
-   if (
-  evento.altKey &&
-  !evento.ctrlKey &&
-  !evento.metaKey &&
-  !evento.shiftKey
-) {
-  if (evento.code === "Digit1") {
-    evento.preventDefault()
-    comandoTornello("entrata")
-  }
+  }, [])
 
-   if (evento.code === "Digit2") {
-    evento.preventDefault()
-    comandoTornello("uscita")
-  }
-}
-  }
+  useEffect(() => {
 
-  window.addEventListener("keydown", gestisciTastiera)
+    function gestisciTastiera(evento: KeyboardEvent) {
 
-  return () => {
-    window.removeEventListener("keydown", gestisciTastiera)
-  }
-}, [])
+      if (evento.repeat) return
 
-return (
+      const elemento = evento.target as HTMLElement | null
+
+      if (
+        elemento?.isContentEditable ||
+        elemento?.closest("input, textarea, select, [contenteditable]")
+      ) {
+        return
+      }
+
+      if (
+        evento.altKey &&
+        !evento.ctrlKey &&
+        !evento.metaKey &&
+        !evento.shiftKey
+      ) {
+
+        if (evento.code === "Digit1") {
+          evento.preventDefault()
+          comandoTornello("entrata")
+        }
+
+        if (evento.code === "Digit2") {
+          evento.preventDefault()
+          comandoTornello("uscita")
+        }
+
+      }
+
+    }
+
+    window.addEventListener("keydown", gestisciTastiera)
+
+    return () => {
+      window.removeEventListener("keydown", gestisciTastiera)
+    }
+
+  }, [comandoTornello])
+
+  return (
     <>
-     <div className="sticky top-0 z-50 flex items-center justify-between border-b border-zinc-700 bg-zinc-950 px-6 py-3 text-white shadow-xl">
+      <div className="sticky top-0 z-50 flex items-center justify-between border-b border-zinc-700 bg-zinc-950 px-6 py-3 text-white shadow-xl">
 
         <Link
           href="/admin"
@@ -62,29 +125,42 @@ return (
           MINOS FIT ADMIN
         </Link>
 
-        <div className="flex gap-3">
-         <button
-  type="button"
-  onClick={() => comandoTornello("entrata")}
-  className="rounded-xl bg-green-600 px-5 py-3 font-black hover:bg-green-500"
->
-  🟢 APRI ENTRATA
-</button>
+        <span
+          role="status"
+          className={`text-sm font-bold ${
+            errore ? "text-red-500" : "text-zinc-300"
+          }`}
+        >
+          {messaggio}
+        </span>
 
-<button
-  type="button"
-  onClick={() => comandoTornello("uscita")}
-  className="rounded-xl bg-red-600 px-5 py-3 font-black hover:bg-red-500"
->
-  🔴 APRI USCITA
-</button>
+        <div className="flex gap-3">
+
+          <button
+            type="button"
+            disabled={occupato}
+            onClick={() => comandoTornello("entrata")}
+            className="rounded-xl bg-green-600 px-5 py-3 font-black hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            🟢 APRI ENTRATA
+          </button>
+
+          <button
+            type="button"
+            disabled={occupato}
+            onClick={() => comandoTornello("uscita")}
+            className="rounded-xl bg-red-600 px-5 py-3 font-black hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            🔴 APRI USCITA
+          </button>
+
         </div>
 
       </div>
 
-     <div>
-  {children}
-</div>
+      <div>
+        {children}
+      </div>
     </>
   )
 }
